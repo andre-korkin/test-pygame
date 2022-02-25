@@ -26,11 +26,11 @@ def run():
 	gun_move_right = False
 	gun_move_left = False
 
+	sound1 = pygame.mixer.Sound('./sound/boom.ogg')
+
 	#------------------------------
 	BULLIT_STEP = 1
-	bullit = False
-	bul_x = 0
-	bul_y = 0
+	bullits = []
 
 	#------------------------------
 	while True:
@@ -39,8 +39,13 @@ def run():
 				sys.exit()
 			elif event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_SPACE:
-					if bul_y <= 0:
-						bullit, bul_x, bul_y = bullitCreate(RED, gun_rect)
+					sound1.play()
+					bul, bul_x, bul_y = bullitCreate(RED, gun_rect)
+					bullit = {}
+					bullit['obj'] = bul
+					bullit['x'] = bul_x
+					bullit['y'] = bul_y
+					bullits.append(bullit)
 				elif event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
 					gun_move_left, gun_move_right = gunMove(event.key, True)
 			elif event.type == pygame.KEYUP:
@@ -48,22 +53,24 @@ def run():
 					gun_move_left, gun_move_right = gunMove(event.key, False)
 
 		gun_x = getGunStep(gun_move_right, gun_move_left, GUN_WIDTH, WIN_WIDTH, gun_x, GUN_STEP)
-		if bul_y > 0:
-			bul_y -= BULLIT_STEP
-		else:
-			bullit = False
-		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullit, bul_x, bul_y, window)
+		for bullit in bullits:
+			if bullit['y'] > 0:
+				bullit['y'] -= BULLIT_STEP
+			else:
+				bullits.remove(bullit)
+		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, window)
 
 
 #-----------------------------------------------------------------------------
 
 
-def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullit, bul_x, bul_y, win):
+def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, win):
 	"""  All objects rendering  """
 	scr.fill(bg)
 	gunRender(scr, scr_rect, gun, gun_rect, gun_x)
-	if bullit:
-		bullitMove(scr, bullit, bul_x, bul_y)
+	if bullits:
+		for bullit in bullits:
+			bullitMove(scr, bullit)
 	win.flip()
 
 
@@ -112,9 +119,9 @@ def bullitCreate(color, gun_rect):
 	return surf, x, y
 
 
-def bullitMove(screen, bullit, bul_x, bul_y):
+def bullitMove(screen, bullit):
 	"""  Bullit moving  """
-	screen.blit(bullit, (bul_x, bul_y))
+	screen.blit(bullit['obj'], (bullit['x'], bullit['y']))
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
