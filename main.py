@@ -33,6 +33,15 @@ def run():
 	bullits = []
 
 	#------------------------------
+	OPPONENT_WIDTH = 30
+	OPPONENT_STEP = 1
+	opponent = pygame.image.load('./img/opponent.jpg')
+	opponent_rect = opponent.get_rect()
+	opponent_rect.top = screen_rect.top + 20
+	opponent_x = 0
+	vector = 'right'
+
+	#------------------------------
 	while True:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -40,12 +49,7 @@ def run():
 			elif event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_SPACE:
 					sound1.play()
-					bul, bul_x, bul_y = bullitCreate(RED, gun_rect)
-					bullit = {}
-					bullit['obj'] = bul
-					bullit['x'] = bul_x
-					bullit['y'] = bul_y
-					bullits.append(bullit)
+					bullits.append(bullitCreate(RED, gun_rect))
 				elif event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
 					gun_move_left, gun_move_right = gunMove(event.key, True)
 			elif event.type == pygame.KEYUP:
@@ -58,19 +62,21 @@ def run():
 				bullit['y'] -= BULLIT_STEP
 			else:
 				bullits.remove(bullit)
-		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, window)
+		opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
+		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
 
 
 #-----------------------------------------------------------------------------
 
 
-def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, win):
+def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, win):
 	"""  All objects rendering  """
 	scr.fill(bg)
 	gunRender(scr, scr_rect, gun, gun_rect, gun_x)
 	if bullits:
 		for bullit in bullits:
 			bullitMove(scr, bullit)
+	opponentRender(scr, scr_rect, opponent, opponent_rect, opponent_x)
 	win.flip()
 
 
@@ -116,12 +122,38 @@ def bullitCreate(color, gun_rect):
 	surf.fill(color)
 	x = gun_rect.centerx - 3
 	y = gun_rect.top - 9
-	return surf, x, y
+	return {'obj': surf, 'x': x, 'y': y}
 
 
 def bullitMove(screen, bullit):
 	"""  Bullit moving  """
 	screen.blit(bullit['obj'], (bullit['x'], bullit['y']))
+
+
+#-------------------------------- OPPONENT -----------------------------------
+
+
+def getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector):
+	"""  Opponent moving  """
+	if vector == 'right':
+		if OPPONENT_WIDTH // 2 + opponent_x < WIN_WIDTH // 2:
+			opponent_x += OPPONENT_STEP
+		else:
+			vector = 'left'
+			opponent_x -= OPPONENT_STEP
+	if vector == 'left':
+		if WIN_WIDTH // 2 + opponent_x > OPPONENT_WIDTH // 2:
+			opponent_x -= OPPONENT_STEP
+		else:
+			vector = 'right'
+			opponent_x += OPPONENT_STEP
+	return opponent_x, vector
+
+
+def opponentRender(screen, screen_rect, opponent, opponent_rect, x):
+	"""  Opponent rendering  """
+	opponent_rect.centerx = screen_rect.centerx + x
+	screen.blit(opponent, opponent_rect)
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
