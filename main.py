@@ -19,6 +19,7 @@ def run():
 
 	game = True
 	score = 0
+	winner = False
 
 	#------------------------------
 	GUN_WIDTH = 50
@@ -65,18 +66,16 @@ def run():
 				if isHit(bullit, opponent):
 					opponents.remove(opponent)
 					score += 1
-					if score == 10:
-						opponent_amount = 2
-						opponents = []
-						for i in range(opponent_amount):
-							opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
-					elif score == 40:
-						opponent_amount = 3
-						opponents = []
-						for i in range(opponent_amount):
+					if score < 150:
+						if score % 10 == 0:
+							opponent_amount, opponents = getOpponents(opponent_amount, opponents, score)
+							for i in range(opponent_amount):
+								opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
+						else:
 							opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
 					else:
-						opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
+						game = False
+						winner = True
 
 			if bullit['y'] > 0:
 				bullit['y'] -= BULLIT_STEP
@@ -89,10 +88,13 @@ def run():
 		# opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
 		# allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
 		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponents, window)
-	
+
 
 	while True:
-		gameOver(screen, BLACK, screen_rect, window)
+		if winner:
+			gameWin(screen, BLACK, screen_rect, window)
+		else:
+			gameOver(screen, BLACK, screen_rect, window)
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -100,6 +102,16 @@ def run():
 
 
 #-----------------------------------------------------------------------------
+
+
+def gameWin(scr, bg, scr_rect, win):
+	scr.fill(bg)
+	text = pygame.font.Font(None, 72).render('YOU WIN', True, (0, 255, 0))
+	text_rect = text.get_rect()
+	text_rect.centerx = scr_rect.centerx
+	text_rect.centery = scr_rect.centery
+	scr.blit(text, text_rect)
+	win.flip()
 
 
 def gameOver(scr, bg, scr_rect, win):
@@ -195,10 +207,12 @@ def isHit(bullit, opponent):
 def opponentCreate(screen_rect, win_width, win_height):
 	"""  Opponent creating  """
 	surf = pygame.Surface((30, 30))
-	pygame.draw.circle(surf, (rnd(0,255), rnd(0,255), rnd(0,255)), (15, 15), 15, 5)
+	pygame.draw.circle(surf, (rnd(0,255), rnd(0,255), rnd(0,255)), (15, 15), 15)
 	x = screen_rect.centerx + rnd(-win_width//2, win_width//2 - 15)
 	y = screen_rect.top + rnd(0, win_height//2)
-	return {'obj': surf, 'x': x, 'y': y, 'vector_x': 'right', 'vector_y': 'bottom'}
+	vx = ['right', 'left'][rnd(0, 1)]
+	vy = ['top', 'bottom'][rnd(0, 1)]
+	return {'obj': surf, 'x': x, 'y': y, 'vector_x': vx, 'vector_y': vy}
 
 
 def opponentMove(opponent, step, win_width, win_height):
@@ -231,6 +245,24 @@ def opponentMove(opponent, step, win_width, win_height):
 def opponentRender(screen, opponent):
 	"""  Opponent moving  """
 	screen.blit(opponent['obj'], (opponent['x'], opponent['y']))
+
+
+def getOpponents(opponent_amount, opponents, score):
+	"""  Calculate amount of opponents for creating new opponents  """
+	if score == 10:
+		opponent_amount = 2
+		opponents = []
+	elif score == 30:
+		opponent_amount = 3
+		opponents = []
+	elif score == 60:
+		opponent_amount = 4
+		opponents = []
+	elif score == 100:
+		opponent_amount = 5
+		opponents = []
+
+	return opponent_amount, opponents
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
