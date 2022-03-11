@@ -1,5 +1,6 @@
 import sys
 import pygame
+from random import randint as rnd
 
 
 def run():
@@ -17,6 +18,7 @@ def run():
 	RED = (255, 0, 0)
 
 	game = True
+	score = 0
 
 	#------------------------------
 	GUN_WIDTH = 50
@@ -35,8 +37,9 @@ def run():
 	bullits = []
 
 	#------------------------------
-	OPPONENT_STEP = 1
-	opponents = [opponentCreate(screen_rect)]
+	OPPONENT_STEP = 0.5
+	opponent_amount = 1
+	opponents = [opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT)]
 
 	#------------------------------
 	while game:
@@ -61,7 +64,19 @@ def run():
 			for opponent in opponents:
 				if isHit(bullit, opponent):
 					opponents.remove(opponent)
-					opponents.append(opponentCreate(screen_rect))
+					score += 1
+					if score == 10:
+						opponent_amount = 2
+						opponents = []
+						for i in range(opponent_amount):
+							opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
+					elif score == 40:
+						opponent_amount = 3
+						opponents = []
+						for i in range(opponent_amount):
+							opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
+					else:
+						opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
 
 			if bullit['y'] > 0:
 				bullit['y'] -= BULLIT_STEP
@@ -177,12 +192,12 @@ def isHit(bullit, opponent):
 #-------------------------------- OPPONENT -----------------------------------
 
 
-def opponentCreate(screen_rect):
+def opponentCreate(screen_rect, win_width, win_height):
 	"""  Opponent creating  """
 	surf = pygame.Surface((30, 30))
-	pygame.draw.circle(surf, (255, 255, 0), (15, 15), 15, 5)
-	x = screen_rect.centerx - 15
-	y = screen_rect.top + 50
+	pygame.draw.circle(surf, (rnd(0,255), rnd(0,255), rnd(0,255)), (15, 15), 15, 5)
+	x = screen_rect.centerx + rnd(-win_width//2, win_width//2 - 15)
+	y = screen_rect.top + rnd(0, win_height//2)
 	return {'obj': surf, 'x': x, 'y': y, 'vector_x': 'right', 'vector_y': 'bottom'}
 
 
