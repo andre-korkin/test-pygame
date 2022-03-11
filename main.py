@@ -16,6 +16,8 @@ def run():
 	BLACK = (0, 0, 0)
 	RED = (255, 0, 0)
 
+	game = True
+
 	#------------------------------
 	GUN_WIDTH = 50
 	GUN_STEP = 3
@@ -42,7 +44,7 @@ def run():
 	vector = 'right'
 
 	#------------------------------
-	while True:
+	while game:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				sys.exit()
@@ -57,16 +59,39 @@ def run():
 					gun_move_left, gun_move_right = gunMove(event.key, False)
 
 		gun_x = getGunStep(gun_move_right, gun_move_left, GUN_WIDTH, WIN_WIDTH, gun_x, GUN_STEP)
+
 		for bullit in bullits:
+			if isHit(bullit, opponent_rect):
+				game = False
+
 			if bullit['y'] > 0:
 				bullit['y'] -= BULLIT_STEP
 			else:
 				bullits.remove(bullit)
+
 		opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
 		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
+	
+
+	while True:
+		gameOver(screen, BLACK, screen_rect, window, WIN_WIDTH, WIN_HEIGHT)
+
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				sys.exit()
 
 
 #-----------------------------------------------------------------------------
+
+
+def gameOver(scr, bg, scr_rect, win, win_width, win_height):
+	scr.fill(bg)
+	text = pygame.font.Font(None, 72).render('GAME OVER', True, (180, 0, 0))
+	text_rect = text.get_rect()
+	text_rect.centerx = scr_rect.centerx
+	text_rect.centery = scr_rect.centery
+	scr.blit(text, text_rect)
+	win.flip()
 
 
 def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, win):
@@ -128,6 +153,17 @@ def bullitCreate(color, gun_rect):
 def bullitMove(screen, bullit):
 	"""  Bullit moving  """
 	screen.blit(bullit['obj'], (bullit['x'], bullit['y']))
+
+
+def isHit(bullit, opponent_rect):
+	"""  return True if bullit -> opponent  """
+	bul_x = bullit['x']
+	bul_y = bullit['y']
+
+	if opponent_rect.left <= bul_x <= opponent_rect.right + 6 and opponent_rect.top <= bul_y <= opponent_rect.bottom + 18:
+		return True
+	else:
+		return False
 
 
 #-------------------------------- OPPONENT -----------------------------------
