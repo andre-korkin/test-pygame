@@ -1,5 +1,6 @@
 import sys
 import pygame
+from random import randint as rnd
 
 
 def run():
@@ -17,6 +18,8 @@ def run():
 	RED = (255, 0, 0)
 
 	game = True
+	score = 0
+	winner = False
 
 	#------------------------------
 	GUN_WIDTH = 50
@@ -35,13 +38,9 @@ def run():
 	bullits = []
 
 	#------------------------------
-	OPPONENT_WIDTH = 30
-	OPPONENT_STEP = 1
-	opponent = pygame.image.load('./img/opponent.jpg')
-	opponent_rect = opponent.get_rect()
-	opponent_rect.top = screen_rect.top + 20
-	opponent_x = 0
-	vector = 'right'
+	OPPONENT_STEP = 0.5
+	opponent_amount = 1
+	opponents = [opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT)]
 
 	#------------------------------
 	while game:
@@ -61,20 +60,41 @@ def run():
 		gun_x = getGunStep(gun_move_right, gun_move_left, GUN_WIDTH, WIN_WIDTH, gun_x, GUN_STEP)
 
 		for bullit in bullits:
-			if isHit(bullit, opponent_rect):
-				game = False
+			# if isHit(bullit, opponent_rect):
+			# 	game = False
+			for opponent in opponents:
+				if isHit(bullit, opponent):
+					opponents.remove(opponent)
+					score += 1
+					if score < 150:
+						if score % 10 == 0:
+							opponent_amount, opponents = getOpponents(opponent_amount, opponents, score)
+							for i in range(opponent_amount):
+								opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
+						else:
+							opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
+					else:
+						game = False
+						winner = True
 
 			if bullit['y'] > 0:
 				bullit['y'] -= BULLIT_STEP
 			else:
 				bullits.remove(bullit)
 
-		opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
-		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
-	
+		for opponent in opponents:
+			opponent = opponentMove(opponent, OPPONENT_STEP, WIN_WIDTH, WIN_HEIGHT)
+
+		# opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
+		# allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
+		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponents, window)
+
 
 	while True:
-		gameOver(screen, BLACK, screen_rect, window)
+		if winner:
+			gameWin(screen, BLACK, screen_rect, window)
+		else:
+			gameOver(screen, BLACK, screen_rect, window)
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -82,6 +102,16 @@ def run():
 
 
 #-----------------------------------------------------------------------------
+
+
+def gameWin(scr, bg, scr_rect, win):
+	scr.fill(bg)
+	text = pygame.font.Font(None, 72).render('YOU WIN', True, (0, 255, 0))
+	text_rect = text.get_rect()
+	text_rect.centerx = scr_rect.centerx
+	text_rect.centery = scr_rect.centery
+	scr.blit(text, text_rect)
+	win.flip()
 
 
 def gameOver(scr, bg, scr_rect, win):
@@ -94,14 +124,16 @@ def gameOver(scr, bg, scr_rect, win):
 	win.flip()
 
 
-def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, win):
+def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponents, win):
 	"""  All objects rendering  """
 	scr.fill(bg)
 	gunRender(scr, scr_rect, gun, gun_rect, gun_x)
 	if bullits:
 		for bullit in bullits:
-			bullitMove(scr, bullit)
-	opponentRender(scr, scr_rect, opponent, opponent_rect, opponent_x)
+			bullitRender(scr, bullit)
+	if opponents:
+		for opponent in opponents:
+			opponentRender(scr, opponent)
 	win.flip()
 
 
@@ -150,17 +182,20 @@ def bullitCreate(color, gun_rect):
 	return {'obj': surf, 'x': x, 'y': y}
 
 
-def bullitMove(screen, bullit):
+def bullitRender(screen, bullit):
 	"""  Bullit moving  """
 	screen.blit(bullit['obj'], (bullit['x'], bullit['y']))
 
 
-def isHit(bullit, opponent_rect):
+def isHit(bullit, opponent):
 	"""  return True if bullit -> opponent  """
 	bul_x = bullit['x']
 	bul_y = bullit['y']
 
-	if opponent_rect.left <= bul_x <= opponent_rect.right + 6 and opponent_rect.top <= bul_y <= opponent_rect.bottom + 18:
+	opp_x = opponent['x']
+	opp_y = opponent['y']
+
+	if opp_x <= bul_x <= opp_x + 30 and opp_y <= bul_y <= opp_y + 30:
 		return True
 	else:
 		return False
@@ -169,27 +204,65 @@ def isHit(bullit, opponent_rect):
 #-------------------------------- OPPONENT -----------------------------------
 
 
-def getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector):
+def opponentCreate(screen_rect, win_width, win_height):
+	"""  Opponent creating  """
+	surf = pygame.Surface((30, 30))
+	pygame.draw.circle(surf, (rnd(0,255), rnd(0,255), rnd(0,255)), (15, 15), 15)
+	x = screen_rect.centerx + rnd(-win_width//2, win_width//2 - 15)
+	y = screen_rect.top + rnd(0, win_height//2)
+	vx = ['right', 'left'][rnd(0, 1)]
+	vy = ['top', 'bottom'][rnd(0, 1)]
+	return {'obj': surf, 'x': x, 'y': y, 'vector_x': vx, 'vector_y': vy}
+
+
+def opponentMove(opponent, step, win_width, win_height):
 	"""  Opponent moving  """
-	if vector == 'right':
-		if OPPONENT_WIDTH // 2 + opponent_x < WIN_WIDTH // 2:
-			opponent_x += OPPONENT_STEP
+	if opponent['vector_x'] == 'right':
+		if opponent['x'] + 30 < win_width:
+			opponent['x'] += step
 		else:
-			vector = 'left'
-			opponent_x -= OPPONENT_STEP
-	if vector == 'left':
-		if WIN_WIDTH // 2 + opponent_x > OPPONENT_WIDTH // 2:
-			opponent_x -= OPPONENT_STEP
+			opponent['vector_x'] = 'left'
+	else:
+		if opponent['x'] > 0:
+			opponent['x'] -= step
 		else:
-			vector = 'right'
-			opponent_x += OPPONENT_STEP
-	return opponent_x, vector
+			opponent['vector_x'] = 'right'
+
+	if opponent['vector_y'] == 'bottom':
+		if opponent['y'] + 30 < win_height:
+			opponent['y'] += step
+		else:
+			opponent['vector_y'] = 'top'
+	else:
+		if opponent['y'] > 0:
+			opponent['y'] -= step
+		else:
+			opponent['vector_y'] = 'bottom'
+
+	return opponent
 
 
-def opponentRender(screen, screen_rect, opponent, opponent_rect, x):
-	"""  Opponent rendering  """
-	opponent_rect.centerx = screen_rect.centerx + x
-	screen.blit(opponent, opponent_rect)
+def opponentRender(screen, opponent):
+	"""  Opponent moving  """
+	screen.blit(opponent['obj'], (opponent['x'], opponent['y']))
+
+
+def getOpponents(opponent_amount, opponents, score):
+	"""  Calculate amount of opponents for creating new opponents  """
+	if score == 10:
+		opponent_amount = 2
+		opponents = []
+	elif score == 30:
+		opponent_amount = 3
+		opponents = []
+	elif score == 60:
+		opponent_amount = 4
+		opponents = []
+	elif score == 100:
+		opponent_amount = 5
+		opponents = []
+
+	return opponent_amount, opponents
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
