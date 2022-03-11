@@ -24,7 +24,7 @@ def run():
 	score = 0
 	font_score = pygame.font.Font(None, 24)
 
-	# health = createHealth(3)
+	health = 3
 
 	#------------------------------
 	GUN_WIDTH = 50
@@ -65,14 +65,12 @@ def run():
 		gun_x = getGunStep(gun_move_right, gun_move_left, GUN_WIDTH, WIN_WIDTH, gun_x, GUN_STEP)
 
 		for bullit in bullits:
-			# if isHit(bullit, opponent_rect):
-			# 	game = False
 			for opponent in opponents:
 				if isHit(bullit, opponent):
 					opponents.remove(opponent)
 					score += 1
 					if score < 150:
-						if score % 10 == 0:
+						if score == 10 or score == 30 or score == 60 or score == 100:
 							opponent_amount, opponents = getOpponents(opponent_amount, opponents, score)
 							for i in range(opponent_amount):
 								opponents.append(opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT))
@@ -88,13 +86,22 @@ def run():
 				bullits.remove(bullit)
 
 		for opponent in opponents:
-			opponent = opponentMove(opponent, OPPONENT_STEP, WIN_WIDTH, WIN_HEIGHT)
+			if isCollision(opponent, gun_rect):
+				opponents.remove(opponent)
+				health -= 1
+				if health < 1:
+					game = False
+				else:
+					healthRender(screen, health)
+					score = 0
+					opponent_amount = 1
+					opponents = [opponentCreate(screen_rect, WIN_WIDTH, WIN_HEIGHT)]
+			else:
+				opponent = opponentMove(opponent, OPPONENT_STEP, WIN_WIDTH, WIN_HEIGHT)
 
 		text_score = font_score.render('SCORE: ' + str(score), True, (255, 255, 255))
 
-		# opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
-		# allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
-		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponents, text_score, window)
+		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponents, text_score, health, window)
 
 
 	while True:
@@ -109,6 +116,24 @@ def run():
 
 
 #-----------------------------------------------------------------------------
+
+
+def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponents, text_score, health, win):
+	"""  All objects rendering  """
+	scr.fill(bg)
+	scr.blit(text_score, (scr_rect.width - 120, scr_rect.y + 30))
+	healthRender(scr, health)
+	gunRender(scr, scr_rect, gun, gun_rect, gun_x)
+	if bullits:
+		for bullit in bullits:
+			bullitRender(scr, bullit)
+	if opponents:
+		for opponent in opponents:
+			opponentRender(scr, opponent)
+	win.flip()
+
+
+#--------------------------------- END GAME ----------------------------------
 
 
 def gameWin(scr, bg, scr_rect, win):
@@ -131,18 +156,14 @@ def gameOver(scr, bg, scr_rect, win):
 	win.flip()
 
 
-def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponents, text_score, win):
-	"""  All objects rendering  """
-	scr.fill(bg)
-	scr.blit(text_score, (scr_rect.width - 120, scr_rect.y + 30))
-	gunRender(scr, scr_rect, gun, gun_rect, gun_x)
-	if bullits:
-		for bullit in bullits:
-			bullitRender(scr, bullit)
-	if opponents:
-		for opponent in opponents:
-			opponentRender(scr, opponent)
-	win.flip()
+#------------------------------ HEALTH ---------------------------------------
+
+
+def healthRender(screen, n):
+	"""  Create array of health  """
+	for i in range(n):
+		health = pygame.image.load('./img/health.jpg')
+		screen.blit(health, (30 + 30 * i, 30))
 
 
 #------------------------------ GUN ------------------------------------------
@@ -186,7 +207,7 @@ def bullitCreate(color, gun_rect):
 	surf = pygame.Surface((6, 18))
 	surf.fill(color)
 	x = gun_rect.centerx - 3
-	y = gun_rect.top - 9
+	y = gun_rect.y - 18
 	return {'obj': surf, 'x': x, 'y': y}
 
 
@@ -203,7 +224,7 @@ def isHit(bullit, opponent):
 	opp_x = opponent['x']
 	opp_y = opponent['y']
 
-	if opp_x <= bul_x <= opp_x + 30 and opp_y <= bul_y <= opp_y + 30:
+	if opp_x - 6 <= bul_x <= opp_x + 30 and opp_y - 18 <= bul_y <= opp_y + 30:
 		return True
 	else:
 		return False
@@ -271,6 +292,20 @@ def opponentMove(opponent, step, win_width, win_height):
 def opponentRender(screen, opponent):
 	"""  Opponent moving  """
 	screen.blit(opponent['obj'], (opponent['x'], opponent['y']))
+
+
+def isCollision(opponent, gun_rect):
+	"""  return True if opponent -> gun  """
+	opp_x = opponent['x']
+	opp_y = opponent['y']
+
+	gun_x = gun_rect.x
+	gun_y = gun_rect.y + 25
+
+	if gun_x - 30 < opp_x < gun_x + 50 and gun_y - 30 < opp_y < gun_y + 25:
+		return True
+	else:
+		return False
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
