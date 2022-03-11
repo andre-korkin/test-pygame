@@ -74,7 +74,7 @@ def run():
 	
 
 	while True:
-		gameOver(screen, BLACK, screen_rect, window, WIN_WIDTH, WIN_HEIGHT)
+		gameOver(screen, BLACK, screen_rect, window)
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -84,7 +84,7 @@ def run():
 #-----------------------------------------------------------------------------
 
 
-def gameOver(scr, bg, scr_rect, win, win_width, win_height):
+def gameOver(scr, bg, scr_rect, win):
 	scr.fill(bg)
 	text = pygame.font.Font(None, 72).render('GAME OVER', True, (180, 0, 0))
 	text_rect = text.get_rect()
