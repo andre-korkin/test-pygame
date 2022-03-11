@@ -18,8 +18,13 @@ def run():
 	RED = (255, 0, 0)
 
 	game = True
-	score = 0
 	winner = False
+
+	#------------------------------
+	score = 0
+	font_score = pygame.font.Font(None, 24)
+
+	# health = createHealth(3)
 
 	#------------------------------
 	GUN_WIDTH = 50
@@ -85,9 +90,11 @@ def run():
 		for opponent in opponents:
 			opponent = opponentMove(opponent, OPPONENT_STEP, WIN_WIDTH, WIN_HEIGHT)
 
+		text_score = font_score.render('SCORE: ' + str(score), True, (255, 255, 255))
+
 		# opponent_x, vector = getOpponentStep(OPPONENT_WIDTH, WIN_WIDTH, opponent_x, OPPONENT_STEP, vector)
 		# allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponent, opponent_rect, opponent_x, window)
-		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponents, window)
+		allRender(screen, BLACK, screen_rect, gun, gun_rect, gun_x, bullits, opponents, text_score, window)
 
 
 	while True:
@@ -124,9 +131,10 @@ def gameOver(scr, bg, scr_rect, win):
 	win.flip()
 
 
-def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponents, win):
+def allRender(scr, bg, scr_rect, gun, gun_rect, gun_x, bullits, opponents, text_score, win):
 	"""  All objects rendering  """
 	scr.fill(bg)
+	scr.blit(text_score, (scr_rect.width - 120, scr_rect.y + 30))
 	gunRender(scr, scr_rect, gun, gun_rect, gun_x)
 	if bullits:
 		for bullit in bullits:
@@ -204,6 +212,24 @@ def isHit(bullit, opponent):
 #-------------------------------- OPPONENT -----------------------------------
 
 
+def getOpponents(opponent_amount, opponents, score):
+	"""  Calculate amount of opponents for creating new opponents  """
+	if score == 10:
+		opponent_amount = 2
+		opponents = []
+	elif score == 30:
+		opponent_amount = 3
+		opponents = []
+	elif score == 60:
+		opponent_amount = 4
+		opponents = []
+	elif score == 100:
+		opponent_amount = 5
+		opponents = []
+
+	return opponent_amount, opponents
+
+
 def opponentCreate(screen_rect, win_width, win_height):
 	"""  Opponent creating  """
 	surf = pygame.Surface((30, 30))
@@ -245,24 +271,6 @@ def opponentMove(opponent, step, win_width, win_height):
 def opponentRender(screen, opponent):
 	"""  Opponent moving  """
 	screen.blit(opponent['obj'], (opponent['x'], opponent['y']))
-
-
-def getOpponents(opponent_amount, opponents, score):
-	"""  Calculate amount of opponents for creating new opponents  """
-	if score == 10:
-		opponent_amount = 2
-		opponents = []
-	elif score == 30:
-		opponent_amount = 3
-		opponents = []
-	elif score == 60:
-		opponent_amount = 4
-		opponents = []
-	elif score == 100:
-		opponent_amount = 5
-		opponents = []
-
-	return opponent_amount, opponents
 
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
